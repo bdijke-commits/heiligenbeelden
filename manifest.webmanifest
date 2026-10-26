@@ -1,0 +1,16 @@
+{
+  "name": "Mijn Heiligenbeelden",
+  "short_name": "Heiligenbeelden",
+  "description": "Overzicht van mijn verzameling heiligenbeelden, met foto's en achtergrond bij elke heilige.",
+  "lang": "nl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F3F2EF",
+  "theme_color": "#1D2340",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

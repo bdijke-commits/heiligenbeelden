@@ -1,0 +1,53 @@
+rules_version = '2';
+// Plak dit in Firebase > Databases & Storage > Firestore > Rules en klik op Publish.
+// Ingesteld voor bdijke@gmail.com (in kleine letters).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() == 'bdijke@gmail.com';
+    }
+
+    // De beelden zelf: iedereen mag kijken, alleen jij wijzigt.
+    match /beelden/{id} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Aankoop, prijs en van wie gekregen: alleen voor jou.
+    match /prive/{id} {
+      allow read, write: if isOwner();
+    }
+
+    // Foto's op volle grootte: iedereen mag kijken, alleen jij wijzigt.
+    match /fotos/{id} {
+      allow read: if true;
+      allow create, update: if isOwner()
+        && request.resource.data.img is string
+        && request.resource.data.img.size() < 900000;
+      allow delete: if isOwner();
+    }
+
+    // Reacties: iedereen mag lezen en (na automatisch anoniem inloggen) reageren.
+    match /reacties/{id} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['beeld', 'naam', 'tekst', 'uid', 't'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.beeld is string
+        && request.resource.data.beeld.size() <= 40
+        && request.resource.data.naam is string
+        && request.resource.data.naam.size() > 0
+        && request.resource.data.naam.size() <= 40
+        && request.resource.data.tekst is string
+        && request.resource.data.tekst.size() > 0
+        && request.resource.data.tekst.size() <= 600
+        && request.resource.data.t == request.time;
+      allow delete: if isOwner()
+        || (request.auth != null && resource.data.uid == request.auth.uid);
+      allow update: if false;
+    }
+  }
+}

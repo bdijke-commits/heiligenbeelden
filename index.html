@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mijn Heiligenbeelden</title>
+<meta name="description" content="Een verzameling heiligenbeelden, met foto's en achtergrond bij elke heilige.">
+<meta name="theme-color" content="#1D2340">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Heiligen">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,500&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="banner" id="demoBanner" hidden>Demo-modus: Firebase is nog niet ingesteld in config.js. Alles wordt alleen in deze browser bewaard.</div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="topbar">
+      <h1>Mijn <em>Heiligen</em>beelden</h1>
+      <div class="actsbar">
+        <button class="btn own-only" id="newBtn">+ Beeld toevoegen</button>
+        <button class="ghost" id="loginBtn">Inloggen</button>
+      </div>
+    </div>
+    <p class="lede" id="lede">Een verzameling heiligenbeelden. Klik op een beeld voor foto's en het verhaal erachter, en laat gerust een reactie achter.</p>
+    <div class="sync"><span class="dot" id="syncDot"></span><span id="syncTxt">Laden…</span></div>
+  </header>
+
+  <section class="summary" aria-label="Overzicht">
+    <div><div class="lbl">In de verzameling</div><div class="count-big" id="tCount">0</div></div>
+    <div class="feest"><div class="lbl" id="feestKop">Feestdagen deze maand</div><ul id="feestList"></ul></div>
+  </section>
+</div>
+
+<div class="filters">
+  <div class="wrap frow">
+    <input type="search" id="q" placeholder="Zoek heilige, attribuut, materiaal…" aria-label="Zoeken">
+    <select id="fMat" aria-label="Materiaal"><option value="">Alle materialen</option></select>
+    <select id="sort" aria-label="Sorteren">
+      <option value="az">Naam A–Z</option>
+      <option value="feest">Op feestdag (jaarkalender)</option>
+      <option value="nieuw">Laatst toegevoegd</option>
+      <option value="periode">Op periode</option>
+    </select>
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<main class="wrap"><div class="grid" id="grid"></div></main>
+<footer class="wrap">Alle foto's in deze verzameling zijn eigen opnames.</footer>
+
+<!-- Detail -->
+<dialog id="dlg" aria-labelledby="dTitle">
+  <div class="dl-top">
+    <div class="big" id="dBig"></div>
+    <div class="strip" id="dStrip" hidden></div>
+    <button class="x" id="dClose" aria-label="Sluiten">×</button>
+  </div>
+  <div class="dl-body">
+    <h2 id="dTitle"></h2>
+    <p class="sub" id="dSub" hidden></p>
+    <dl class="info" id="dInfo"></dl>
+    <div class="prive own-only" id="dPriveBox"><h3>Alleen voor jou</h3><dl class="info" id="dPrive"></dl></div>
+    <div class="row own-only">
+      <button class="ghost" id="dEdit">Bewerken</button>
+      <button class="ghost danger" id="dDel">Verwijderen</button>
+      <span id="dDelConfirm" hidden>Zeker weten? <button class="ghost danger" id="dDelYes">Ja, verwijder</button> <button class="ghost" id="dDelNo">Nee</button></span>
+    </div>
+    <section class="react" aria-labelledby="rKop">
+      <h3 id="rKop">Reacties</h3>
+      <ul class="rlist" id="rList"></ul>
+      <form class="rform" id="rForm">
+        <input id="rNaam" maxlength="40" placeholder="Je naam" aria-label="Je naam" autocomplete="name" required>
+        <textarea id="rTekst" maxlength="600" placeholder="Bijv. dit beeld lijkt op het beeld in onze kerk…" aria-label="Je reactie" required></textarea>
+        <div class="row"><button class="btn" id="rSend" type="submit">Plaats reactie</button><small id="rMsg"></small></div>
+      </form>
+    </section>
+  </div>
+</dialog>
+
+<!-- Toevoegen / bewerken -->
+<dialog id="fdlg" aria-labelledby="fTitle">
+  <form class="dl-body fform" id="fForm">
+    <h2 id="fTitle">Beeld toevoegen</h2>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Foto's <small style="text-transform:none;letter-spacing:0;font-weight:400">(de eerste is de hoofdfoto)</small></div>
+      <div class="fotos-edit" id="fFotos"></div>
+    </div>
+    <div class="fgrid">
+      <label class="full">Heilige *<input id="fNaam" required maxlength="80" placeholder="Bijv. Sint-Antonius van Padua"></label>
+      <label class="full">Omschrijving<input id="fOms" maxlength="120" placeholder="Bijv. met kind en lelie"></label>
+      <fieldset>
+        <legend>Het beeld</legend>
+        <label>Materiaal<input id="fMat2" list="matList" maxlength="40" placeholder="Hout, gips, brons…"></label>
+        <label>Hoogte (cm)<input id="fHoogte" type="number" min="0" step="0.5" inputmode="decimal"></label>
+        <label>Periode / jaartal<input id="fPeriode" maxlength="40" placeholder="Bijv. ca. 1900, 18e eeuw"></label>
+        <label>Herkomst<input id="fHerkomst" maxlength="60" placeholder="Bijv. België, atelier Mayer"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Over de heilige</legend>
+        <label>Feestdag
+          <span class="dagmaand"><select id="fDag" aria-label="Dag"><option value="">dag</option></select><select id="fMaand" aria-label="Maand"><option value="">maand</option></select></span>
+        </label>
+        <label>Attributen<input id="fAttr" maxlength="120" placeholder="Bijv. sleutels, lam, lelie"></label>
+        <label class="full" style="grid-column:1/-1">Patroon van<input id="fPatroon" maxlength="120" placeholder="Bijv. verloren voorwerpen, reizigers"></label>
+      </fieldset>
+      <fieldset class="goud">
+        <legend>Hoe kwam het bij jou (alleen voor jou zichtbaar)</legend>
+        <label>Verkregen
+          <select id="fHoe"><option value="">—</option><option value="gekocht">Gekocht</option><option value="gekregen">Gekregen</option><option value="geërfd">Geërfd</option></select>
+        </label>
+        <label>Wanneer<input id="fWanneer" maxlength="40" placeholder="Bijv. mei 2019"></label>
+        <label>Waar<input id="fWaar" maxlength="80" placeholder="Bijv. rommelmarkt Tongeren"></label>
+        <label id="fPrijsL">Prijs (€)<input id="fPrijs" type="number" min="0" step="0.01" inputmode="decimal"></label>
+        <label id="fVanL" class="full" style="grid-column:1/-1">Van wie gekregen<input id="fVan" maxlength="80" placeholder="Bijv. oma Riet"></label>
+        <label class="full" style="grid-column:1/-1">Notitie<textarea id="fNotitie" maxlength="1000"></textarea></label>
+      </fieldset>
+      <label class="full">Verhaal of toelichting (voor iedereen zichtbaar)<textarea id="fVerhaal" maxlength="2000"></textarea></label>
+    </div>
+    <datalist id="matList"><option>Hout</option><option>Gips</option><option>Brons</option><option>Porselein</option><option>Terracotta</option><option>Marmer</option><option>Kunststof</option><option>Was</option><option>Zilver</option></datalist>
+    <div class="row sticky-acts"><button class="btn" id="fSave" type="submit">Opslaan</button><button class="ghost" type="button" id="fCancel">Annuleren</button><small id="fMsg"></small></div>
+  </form>
+</dialog>
+
+<!-- Inloggen -->
+<dialog id="loginDlg" aria-labelledby="lKop">
+  <form class="dl-body" id="loginForm">
+    <h2 id="lKop">Inloggen om te bewerken</h2>
+    <p class="sub" style="margin:0">Alleen de eigenaar van de verzameling kan inloggen. Bezoekers kunnen zonder inloggen kijken en reageren.</p>
+    <label class="lbl" for="lEmail">E-mailadres</label><input id="lEmail" type="email" autocomplete="username" required>
+    <label class="lbl" for="lPass">Wachtwoord</label><input id="lPass" type="password" autocomplete="current-password" required>
+    <div class="row"><button class="btn" type="submit">Inloggen</button><button class="ghost" type="button" id="lCancel">Annuleren</button><small id="lMsg"></small></div>
+  </form>
+</dialog>
+
+<script type="module" src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
